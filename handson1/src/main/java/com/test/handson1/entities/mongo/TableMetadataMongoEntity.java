@@ -15,7 +15,7 @@ public class TableMetadataMongoEntity implements Serializable {
 	private Integer id;
 
 //	private Integer tableMetadataId;
-	
+
 	private String schemaName;
 
 	private String tableName;
@@ -24,4 +24,5 @@ public class TableMetadataMongoEntity implements Serializable {
 
 	private Boolean isActive;
 
+	private String tenantName;
 }

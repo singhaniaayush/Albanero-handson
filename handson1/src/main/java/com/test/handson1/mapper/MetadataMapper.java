@@ -3,7 +3,6 @@ package com.test.handson1.mapper;
 import java.util.List;
 
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import com.test.handson1.entities.ColumnMetadata;

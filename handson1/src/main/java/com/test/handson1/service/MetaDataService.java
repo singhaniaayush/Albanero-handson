@@ -1,8 +1,13 @@
 package com.test.handson1.service;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import javax.sql.DataSource;
 
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.test.handson1.config.MultiTenancy;
 import com.test.handson1.constants.ApplicationConstants;
 import com.test.handson1.entities.ColumnMetadata;
 import com.test.handson1.entities.TableMetadata;
@@ -22,7 +28,7 @@ import com.test.handson1.model.TableMetadataDTO;
 import com.test.handson1.repository.ColumnMetaDataRepo;
 import com.test.handson1.repository.TableMetaDataRepo;
 import com.test.handson1.repository.mongo.ColumnMetaDataMongo;
-import com.test.handson1.repository.mongo.TenantMetaDataMongo;
+import com.test.handson1.repository.mongo.TableMetaDataMongo;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,7 +46,7 @@ public class MetaDataService {
 	private MetadataMapper mapper;
 
 	@Autowired
-	private TenantMetaDataMongo tenantMetaDataMongo;
+	private TableMetaDataMongo tenantMetaDataMongo;
 
 	@Autowired
 	private ColumnMetaDataMongo columnMetaDataMongo;
@@ -53,7 +59,21 @@ public class MetaDataService {
 		String tenantId = MDC.get(ApplicationConstants.TENANT_ID);
 
 		if (StringUtils.hasText(tenantId) && tenantId.equalsIgnoreCase("all")) {
-			loadForSql(id);
+
+			Map<String, DataSource> dataSources = MultiTenancy.getInstance().getTenants();
+
+			dataSources.entrySet().stream().parallel().forEach(entry -> {
+
+				try (Connection connection = entry.getValue().getConnection()) {
+
+					PreparedStatement preparedStatement = connection.prepareStatement(""); 
+					
+				} catch (Exception e) {
+					log.error("retrieveMetaDataForId|Key: {}|Exception: {}", entry.getKey(), e.getMessage());
+				}
+
+			});
+
 			return loadForMongo(id);
 
 		} else if (StringUtils.hasText(tenantId) && tenantId.equalsIgnoreCase("mongo")) {
@@ -72,8 +92,11 @@ public class MetaDataService {
 		if (tableMetadata.isPresent()) {
 			List<ColumnMetadataMongoEntity> columnMetadatas = columnMetaDataMongo.findByTableMetadataId(id);
 
-//			tableMetadata.get().setId(null);
-//			columnMetadatas.stream().parallel().filter(Objects::nonNull).forEach(data -> data.setId(null));
+			String tenantName = MDC.get(ApplicationConstants.TENANT_ID);
+
+			tableMetadata.get().setTenantName(tenantName);
+			columnMetadatas.stream().parallel().filter(Objects::nonNull)
+					.forEach(data -> data.setTenantName(tenantName));
 
 			tenantMetaDataMongo.save(tableMetadata.get());
 			columnMetaDataMongo.saveAll(columnMetadatas);
@@ -103,8 +126,11 @@ public class MetaDataService {
 			TableMetadataMongoEntity tableMongoEntity = mapper.convertTableToMongo(tableMetadata.get());
 			List<ColumnMetadataMongoEntity> columnMongoEntities = mapper.convertColumnToDTOMongo(columnMetadatas);
 
-//			tableMongoEntity.setId(null);
-//			columnMongoEntities.stream().parallel().filter(Objects::nonNull).forEach(data -> data.setId(null));
+			String tenantName = MDC.get(ApplicationConstants.TENANT_ID);
+			tableMongoEntity.setTenantName(tenantName);
+
+			columnMongoEntities.stream().parallel().filter(Objects::nonNull)
+					.forEach(data -> data.setTenantName(tenantName));
 
 			tenantMetaDataMongo.save(tableMongoEntity);
 			columnMetaDataMongo.saveAll(columnMongoEntities);

@@ -17,11 +17,30 @@ public class MultiTenancy extends AbstractRoutingDataSource implements Serializa
 
 	private static final ConcurrentHashMap<String, DataSource> tenants = new ConcurrentHashMap<>();
 
-	protected void addTenant(String tenantName, DataSource dataSource) {
+	private static MultiTenancy multiTenancy = null;
+
+	private MultiTenancy() {
+
+	}
+
+	public static MultiTenancy getInstance() {
+
+		if (multiTenancy != null) {
+			return multiTenancy;
+		}
+
+		synchronized (MultiTenancy.class) {
+			multiTenancy = new MultiTenancy();
+			return multiTenancy;
+		}
+
+	}
+
+	public void addTenant(String tenantName, DataSource dataSource) {
 		tenants.put(tenantName, dataSource);
 	}
 
-	protected ConcurrentHashMap<String, DataSource> getTenants() {
+	public ConcurrentHashMap<String, DataSource> getTenants() {
 		return tenants;
 	}
 

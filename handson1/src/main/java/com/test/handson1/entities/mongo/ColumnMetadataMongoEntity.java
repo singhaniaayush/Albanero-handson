@@ -26,4 +26,6 @@ public class ColumnMetadataMongoEntity implements Serializable {
 
 	private Boolean isActive;
 
+	private String tenantName;
+	
 }

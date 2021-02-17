@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import com.test.handson1.entities.mongo.TableMetadataMongoEntity;
 
 @Repository
-public interface TenantMetaDataMongo extends MongoRepository<TableMetadataMongoEntity, Integer> {
+public interface TableMetaDataMongo extends MongoRepository<TableMetadataMongoEntity, Integer> {
 
 }
